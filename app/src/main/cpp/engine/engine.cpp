@@ -1,30 +1,30 @@
-#include <jni.h>
-#include <string>
-
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 #include <android/native_window_jni.h>
-
-#include <GLES3/gl3.h>
-
-#include <thread>
+#include <android/native_window.h>
 #include <mutex>
-#include <condition_variable>
-
-#include <android/log.h>
-
-#include <atomic>
 #include <queue>
-#include "engine.h"
-
-#include <future>
+#include <optional>
 #include <thread>
 
-static_assert(std::atomic<bool>::is_always_lock_free);
+#include <iostream>
 
-std::unique_ptr<std::thread> m_thread;
+#include "module.hpp"
 
-void render_thread();
+#include "event/event.hpp"
+#include "window/window.hpp"
+
+namespace {
+	engine::module::handle<engine::window::Window> window;
+
+	std::unique_ptr<std::thread> m_thread;
+
+	extern "C" int main();
+
+    inline void engine_main() {
+    	window->makeCurrent();
+        main();
+        window->destroy();
+    }
+}
 
 extern "C" {
     JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
@@ -35,7 +35,7 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onCreate(JNIEnv *env, jclass) {
-        engine_initialize();
+        window->create();
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onStart(JNIEnv *env, jclass) {
@@ -51,49 +51,26 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onDestroy(JNIEnv *env, jclass) {
-        engine_dispatch_event(engine_event::quit, false);
+        engine::event::push(engine::event::Event::quit, false);
+
         m_thread->join();
         m_thread.reset();
-
-        engine_terminate();
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_surfaceCreated(JNIEnv *env, jclass, jobject surface) {
-        engine_init_surface(ANativeWindow_fromSurface(env, surface));
+        window->createSurface(ANativeWindow_fromSurface(env, surface));
 
         if (m_thread == nullptr) {
-            m_thread = std::make_unique<std::thread>(render_thread);
+            m_thread = std::make_unique<std::thread>(engine_main);
+        } else {
+            engine::event::push(engine::event::Event::create_surface, true);
         }
-
-        engine_dispatch_event(engine_event::create_surface, true);
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_surfaceChanged(JNIEnv *env, jclass, jobject surface, jint format, jint width, jint height) {
-
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_surfaceDestroyed(JNIEnv *env, jclass, jobject surface) {
-        engine_dispatch_event(engine_event::destroy_surface, true);
-    }
-}
-
-void render_thread() {
-    engine_event_t event;
-
-    while (true) {
-        while (engine_pool_event(event)) {
-            engine_handle_event(event);
-        }
-        if (engine_request_quit()) {
-            break;
-        }
-
-        if (engine_render()) {
-            glClearColor(1, 1, 1, 1);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            engine_swap_buffer();
-        }
-        std::this_thread::yield();
+        engine::event::push(engine::event::Event::destroy_surface, true);
     }
 }

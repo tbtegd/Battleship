@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import kotlin.system.exitProcess
 
 class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +42,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onDestroy() {
         super.onDestroy()
         Engine.onDestroy()
+
+        exitProcess(0)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
