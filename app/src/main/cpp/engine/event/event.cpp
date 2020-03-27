@@ -49,10 +49,10 @@ void engine::event::handle(Event& event) {
 			break;
 		case engine::event::Event::create_surface:
 			::window->makeCurrent();
-			::graphics->set_active(true);
+            ::graphics->setActive(true);
 			break;
 		case engine::event::Event::destroy_surface:
-			::graphics->set_active(false);
+            ::graphics->setActive(false);
 			::window->destroySurface();
 			break;
 	}

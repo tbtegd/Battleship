@@ -1,10 +1,19 @@
 #include "event/event.hpp"
-#include "graphics/graphics.hpp"
 #include "window/window.hpp"
+#include "graphics/shader.hpp"
+#include "graphics/graphics.hpp"
 
 #include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
+
+#include <fstream>
+#include <sstream>
+#include <string_view>
 #include <thread>
 #include <vector>
+#include <iostream>
+
+#include <optional>
 
 inline namespace math {
 	template <size_t N, typename T> //requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
@@ -66,20 +75,9 @@ static const GLfloat g_color_buffer_data[] = {
         0.327f,  0.483f,  0.844f
 };
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-#include <GLES3/gl3ext.h>
-
-#include <fstream>
-#include <sstream>
-#include <string_view>
-
-using std::string_literals::operator""s;
 using std::string_view_literals::operator""sv;
 
-const std::string vertex_src = R"(
+constexpr engine::graphics::ShaderSource vertex_src = R"(
     #version 300 es
 
     layout(location = 0) in vec3 vertexPosition;
@@ -91,9 +89,9 @@ const std::string vertex_src = R"(
         _Color = vertexColor;
         gl_Position = vec4(vertexPosition, 1.0);
     }
-)"s;
+)"sv;
 
-const std::string fragment_src = R"(
+constexpr engine::graphics::ShaderSource fragment_src = R"(
     #version 300 es
     out vec3 color;
 
@@ -102,73 +100,13 @@ const std::string fragment_src = R"(
     void main(){
         color = _Color;
     }
-)"s;
-
-GLuint LoadShaders(std::string const& vsource, std::string const& fsource) {
-    GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-    GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
-    GLint Result = GL_FALSE;
-    int InfoLogLength;
-
-    // Компилируем Вершинный шейдер
-    auto VertexSourcePointer = vsource.c_str();
-//    auto VertexSourceLength = GLint(vsource.size());
-    glShaderSource(VertexShaderID, 1, &VertexSourcePointer , nullptr);
-    glCompileShader(VertexShaderID);
-
-    // Выполняем проверку Вершинного шейдера
-    glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> VertexShaderErrorMessage(InfoLogLength+1);
-        glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, &VertexShaderErrorMessage[0]);
-        fprintf(stdout, "%sn", &VertexShaderErrorMessage[0]);
-    }
-
-    // Компилируем Фрагментный шейдер
-    auto FragmentSourcePointer = fsource.c_str();
-//    auto FragmentSourceLength = GLint(fsource.size());
-    glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, nullptr);
-    glCompileShader(FragmentShaderID);
-
-    // Проверяем Фрагментный шейдер
-    glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-    glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> FragmentShaderErrorMessage(InfoLogLength+1);
-        glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, &FragmentShaderErrorMessage[0]);
-        fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
-    }
-
-    // Создаем шейдерную программу и привязываем шейдеры к ней
-    fprintf(stdout, "Создаем шейдерную программу и привязываем шейдеры к нейn");
-    GLuint ProgramID = glCreateProgram();
-    glAttachShader(ProgramID, VertexShaderID);
-    glAttachShader(ProgramID, FragmentShaderID);
-    glLinkProgram(ProgramID);
-
-    // Проверяем шейдерную программу
-    glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-    glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-    if ( InfoLogLength > 0 ){
-        std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-        glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, &ProgramErrorMessage[0]);
-        fprintf(stdout, "%s\n", &ProgramErrorMessage[0]);
-    }
-
-    glDeleteShader(VertexShaderID);
-    glDeleteShader(FragmentShaderID);
-
-    return ProgramID;
-}
+)"sv;
 
 int main() {
     GLuint m_vao, m_vbo, m_cbo;
 
-    GLuint programID = LoadShaders(vertex_src, fragment_src);
-
-    glUseProgram(programID);
+    auto shader = engine::graphics::newShader(vertex_src, fragment_src);
+    glUseProgram(shader);
 
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
@@ -191,13 +129,13 @@ int main() {
     glClearColor(1, 1, 1, 1);
 
     engine::event::Event event;
-    while (engine::window::is_open()) {
+    while (engine::window::isOpen()) {
         engine::event::pump();
         while (engine::event::poll(event)) {
             engine::event::handle(event);
         }
 
-        if (engine::graphics::is_active()) {
+        if (engine::graphics::isActive()) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glBindVertexArray(m_vao);

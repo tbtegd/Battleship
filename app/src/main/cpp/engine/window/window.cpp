@@ -10,6 +10,6 @@ void engine::window::close() {
     ::window->close();
 }
 
-bool engine::window::is_open() {
-    return ::window->is_open();
+bool engine::window::isOpen() {
+    return ::window->isOpen();
 }

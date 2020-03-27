@@ -30,13 +30,13 @@ namespace engine::window {
 		inline void close() {
 			impl.close();
 		}
-		inline bool is_open() {
-			return impl.is_open();
+		inline bool isOpen() {
+			return impl.isOpen();
 		}
 	private:
 		internal::Window impl;
 	};
 
 	extern void close();
-	extern bool is_open();
+	extern bool isOpen();
 }

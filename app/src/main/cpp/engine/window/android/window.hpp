@@ -20,7 +20,7 @@ namespace engine::window::internal {
 		inline void close() {
 			opened.store(false);
 		}
-		inline bool is_open() {
+		inline bool isOpen() {
 			return opened.load();
 		}
 	private:

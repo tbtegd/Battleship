@@ -12,6 +12,8 @@ add_library(engine STATIC
     event/event.hpp
     graphics/graphics.cpp
     graphics/graphics.hpp
+    graphics/shader.cpp
+    graphics/shader.hpp
     window/window.cpp
     window/window.hpp
     window/android/window.cpp
