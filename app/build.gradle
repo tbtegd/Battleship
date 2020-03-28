@@ -17,22 +17,8 @@ android {
 
         externalNativeBuild {
             cmake {
+                cppFlags += "-fdeclspec"
                 cppFlags += "-std=gnu++2a"
-                cppFlags += "-fvisibility=hidden"
-                cppFlags += "-fvisibility-inlines-hidden"
-                cppFlags += "-ffunction-sections"
-                cppFlags += "-fdata-sections"
-                cppFlags += "-fno-plt"
-                cppFlags += "-Wl,--gc-sections"
-                cppFlags += "-Wl,--exclude-libs,ALL"
-
-                cFlags += "-fvisibility=hidden"
-                cFlags += "-fvisibility-inlines-hidden"
-                cFlags += "-ffunction-sections"
-                cFlags += "-fdata-sections"
-                cFlags += "-fno-plt"
-                cFlags += "-Wl,--gc-sections"
-                cFlags += "-Wl,--exclude-libs,ALL"
             }
         }
 
@@ -45,10 +31,30 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            externalNativeBuild {
+                cmake {
+                    cppFlags += "-fvisibility=hidden"
+                    cppFlags += "-fvisibility-inlines-hidden"
+                    cppFlags += "-ffunction-sections"
+                    cppFlags += "-fdata-sections"
+                    cppFlags += "-fno-plt"
+                    cppFlags += "-Wl,--gc-sections"
+                    cppFlags += "-Wl,--exclude-libs,ALL"
+
+                    cFlags += "-fvisibility=hidden"
+                    cFlags += "-fvisibility-inlines-hidden"
+                    cFlags += "-ffunction-sections"
+                    cFlags += "-fdata-sections"
+                    cFlags += "-fno-plt"
+                    cFlags += "-Wl,--gc-sections"
+                    cFlags += "-Wl,--exclude-libs,ALL"
+                }
+            }
         }
         debug {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
         }
     }
     externalNativeBuild {
