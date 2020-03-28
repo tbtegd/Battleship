@@ -7,20 +7,25 @@
 
 #include <iostream>
 
-#include "module.hpp"
-
-#include "event/event.hpp"
-#include "window/window.hpp"
+#include <graphics/graphics.hpp>
+#include <common/module.hpp>
+#include <event/event.hpp>
+#include <window/window.hpp>
+#include <unistd.h>
+#include <engine/system/system.hpp>
+#include <android/log.h>
 
 namespace {
-	engine::module::handle<engine::window::Window> window;
+    engine::module::handle<engine::event::Event> event;
+    engine::module::handle<engine::window::Window> window;
+    engine::module::handle<engine::graphics::Graphics> graphics;
 
 	std::unique_ptr<std::thread> m_thread;
 
 	extern "C" int main();
 
     inline void engine_main() {
-    	window->makeCurrent();
+        window->makeCurrent();
         main();
         window->destroy();
     }
@@ -28,10 +33,15 @@ namespace {
 
 extern "C" {
     JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
+        if (engine::system::event::init() < 0) {
+            return JNI_ERR;
+        }
+
         return JNI_VERSION_1_6;
     }
 
     JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {
+        engine::system::event::quit();
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onCreate(JNIEnv *env, jclass) {
@@ -51,7 +61,8 @@ extern "C" {
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onDestroy(JNIEnv *env, jclass) {
-        engine::event::push(engine::event::Event::quit, false);
+        event->clear();
+        window->close();
 
         m_thread->join();
         m_thread.reset();
@@ -63,14 +74,27 @@ extern "C" {
         if (m_thread == nullptr) {
             m_thread = std::make_unique<std::thread>(engine_main);
         } else {
-            engine::event::push(engine::event::Event::create_surface, true);
+            std::promise<void> promise{};
+            engine::system::event::Message message{
+                    .type = engine::system::event::Event::SURFACE_CREATED,
+                    .data = &promise
+            };
+            engine::system::event::push(message);
+            promise.get_future().get();
         }
     }
 
-    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_surfaceChanged(JNIEnv *env, jclass, jobject surface, jint format, jint width, jint height) {
+    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_surfaceChanged(JNIEnv *env, jclass, jobject surface, jint /*format*/, jint width, jint height) {
+        window->updateSurface();
     }
 
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_surfaceDestroyed(JNIEnv *env, jclass, jobject surface) {
-        engine::event::push(engine::event::Event::destroy_surface, true);
+        std::promise<void> promise{};
+        engine::system::event::Message message{
+                .type = engine::system::event::Event::SURFACE_DESTROYED,
+                .data = &promise
+        };
+        engine::system::event::push(message);
+        promise.get_future().get();
     }
 }

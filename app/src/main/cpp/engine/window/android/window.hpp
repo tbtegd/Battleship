@@ -9,6 +9,7 @@ namespace engine::window::internal {
 		void createDisplay();
 		void createContext();
 		void createSurface(void* native);
+		void updateSurface();
 
 		void destroySurface();
 		void destroyContext();
@@ -24,11 +25,13 @@ namespace engine::window::internal {
 			return opened.load();
 		}
 	private:
+		NativeWindowType window = nullptr;
 		EGLDisplay display = EGL_NO_DISPLAY;
 		EGLContext context = EGL_NO_CONTEXT;
 		EGLSurface surface = EGL_NO_SURFACE;
 		EGLConfig config = EGL_NO_CONFIG_KHR;
 		EGLint format = 0;
+		EGLint width, height;
 		std::atomic_bool opened{true};
 	};
 }

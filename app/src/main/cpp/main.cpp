@@ -128,16 +128,16 @@ int main() {
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
     glVertexAttribPointer(1, 3,  GL_FLOAT, GL_FALSE, 0, nullptr);
-    glClearColor(1, 1, 1, 1);
 
-    engine::event::Event event;
+    engine::event::Message message{};
     while (engine::window::isOpen()) {
         engine::event::pump();
-        while (engine::event::poll(event)) {
-            engine::event::handle(event);
+        while (engine::event::poll(message)) {
+            engine::event::handle(message);
         }
 
         if (engine::graphics::isActive()) {
+            glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glBindVertexArray(m_vao);

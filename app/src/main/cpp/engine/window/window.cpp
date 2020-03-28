@@ -1,6 +1,6 @@
 #include "window.hpp"
 
-#include "../module.hpp"
+#include "common/module.hpp"
 
 namespace {
     engine::module::handle<engine::window::Window> window;

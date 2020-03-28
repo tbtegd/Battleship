@@ -20,6 +20,9 @@ namespace engine::window {
 		inline void createSurface(void* native) {
 			impl.createSurface(native);
 		}
+		inline void updateSurface() {
+			impl.updateSurface();
+		}
 		inline void destroySurface() {
 			impl.destroySurface();
 		}

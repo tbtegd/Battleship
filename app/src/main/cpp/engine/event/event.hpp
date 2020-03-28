@@ -1,26 +1,37 @@
 #pragma once
 
 #include <future>
+#include <vector>
+#include <any>
+#include <string_view>
+#include <initializer_list>
+#include <queue>
 
 namespace engine::event {
-    struct Event {
-    	using Promise = std::promise<void>;
-        enum Type {
-            quit,
-            create_surface,
-            destroy_surface,
-        };
-
-        Promise promise;
-        Type type;
-
-        explicit Event() = default;
-        Event(Promise&& promise, Type type) : promise(std::forward<Promise>(promise)), type(type) {}
+    struct Message {
+        int type = 0;
+        explicit constexpr Message() = default;
+        explicit constexpr Message(int type) : type(type) {}
     };
 
-	extern void push(Event::Type type, bool wait);
+	struct Event {
+		Event();
+		~Event();
+
+		enum : int { Quit };
+		void push(int type);
+		bool poll(Message& message);
+		void clear();
+
+	private:
+		std::mutex mutex;
+		std::queue<Message> queue{};
+	};
+
+	extern void push(int type);
 	extern void pump();
-    extern bool poll(Event& event);
-    extern void handle(Event& event);
+    extern bool poll(Message& message);
+    extern void handle(Message& message);
     extern void quit();
+    extern void clear();
 }

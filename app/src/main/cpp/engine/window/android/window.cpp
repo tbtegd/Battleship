@@ -34,14 +34,16 @@ void engine::window::internal::Window::createContext() {
 }
 
 void engine::window::internal::Window::createSurface(void *native) {
-	auto window = reinterpret_cast<EGLNativeWindowType>(native);
-
+	window = reinterpret_cast<NativeWindowType>(native);
 	surface = eglCreateWindowSurface(display, config, window, nullptr);
 
-	EGLint width, height;
 	eglQuerySurface(display, surface, EGL_WIDTH, &width);
 	eglQuerySurface(display, surface, EGL_HEIGHT, &height);
 
+	ANativeWindow_acquire(window);
+}
+
+void engine::window::internal::Window::updateSurface() {
 	ANativeWindow_setBuffersGeometry(window, width, height, format);
 }
 
@@ -49,6 +51,8 @@ void engine::window::internal::Window::destroySurface() {
 	eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 	eglDestroySurface(display, surface);
 	surface = EGL_NO_SURFACE;
+
+	ANativeWindow_release(window);
 }
 
 void engine::window::internal::Window::destroyContext() {

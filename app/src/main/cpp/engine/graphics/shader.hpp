@@ -1,7 +1,6 @@
 #pragma once
 
 #include <GLES3/gl3.h>
-#include <utility>
 #include <string_view>
 
 namespace engine::graphics {
@@ -23,9 +22,12 @@ namespace engine::graphics {
 
 		Shader(const Shader& shader) = delete;
 		Shader& operator=(const Shader& shader) = delete;
-		Shader(Shader&& shader) : m_program(std::exchange(shader.m_program, 0)) {}
+		Shader(Shader&& shader) : m_program(shader.m_program) {
+			shader.m_program = 0;
+		}
 		Shader& operator=(Shader&& shader)  {
-			m_program = std::exchange(shader.m_program, 0);
+			m_program = shader.m_program;
+			shader.m_program = 0;
 			return *this;
 		}
 		inline void release() {

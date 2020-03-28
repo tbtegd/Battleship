@@ -7,16 +7,20 @@ include_directories(.)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(engine STATIC
-    module.hpp
-    event/event.cpp
-    event/event.hpp
-    graphics/graphics.cpp
-    graphics/graphics.hpp
-    graphics/shader.cpp
-    graphics/shader.hpp
-    window/window.cpp
-    window/window.hpp
-    window/android/window.cpp
-    window/android/window.hpp)
+        common/module.hpp
+        common/object.hpp
+        system/system.cpp
+        system/system.hpp
+        event/event.cpp
+        event/event.hpp
+        graphics/graphics.cpp
+        graphics/graphics.hpp
+        graphics/shader.cpp
+        graphics/shader.hpp
+        window/window.cpp
+        window/window.hpp
+        window/android/window.cpp
+        window/android/window.hpp
+)
 
 target_link_libraries(engine EGL GLESv2 GLESv3 android log)
