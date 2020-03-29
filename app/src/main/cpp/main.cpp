@@ -1,69 +1,9 @@
-#include "event/event.hpp"
-#include "window/window.hpp"
-#include "graphics/shader.hpp"
-#include "graphics/graphics.hpp"
-
-#include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
-
-#include <fstream>
-#include <sstream>
 #include <string_view>
 #include <thread>
-#include <vector>
-#include <iostream>
 
-#include <optional>
-
-#include <experimental/simd>
-
-inline namespace math {
-	template <size_t N, typename T> //requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
-	struct vec;
-
-	template <typename T>
-	struct vec<2, T> {
-		T x, y;
-
-		explicit constexpr vec() noexcept : x(0), y(0) {}
-		explicit constexpr vec(T scalar) noexcept : x(scalar), y(scalar) {}
-		explicit constexpr vec(T x, T y, T z) noexcept : x(x), y(y) {}
-	};
-
-	template <typename T>
-	struct vec<3, T> {
-		T x, y, z;
-
-		explicit constexpr vec() noexcept : x(0), y(0), z(0) {}
-		explicit constexpr vec(T scalar) noexcept : x(scalar), y(scalar), z(scalar) {}
-		explicit constexpr vec(T x, T y, T z) noexcept : x(x), y(y), z(z) {}
-	};
-
-	template <typename T>
-	struct vec<4, T> {
-		T x, y, z, w;
-
-		explicit constexpr vec() noexcept : x(0), y(0), z(0), w(0) {}
-		explicit constexpr vec(T scalar) noexcept : x(scalar), y(scalar), z(scalar), w(scalar) {}
-		explicit constexpr vec(T x, T y, T z, T w) noexcept : x(x), y(y), z(z), w(w) {}
-	};
-
-    using vec2 = vec<2, float>;
-    using vec3 = vec<3, float>;
-    using vec4 = vec<4, float>;
-    using ivec2 = vec<2, int>;
-    using ivec3 = vec<3, int>;
-    using ivec4 = vec<4, int>;
-    using bvec2 = vec<2, bool>;
-    using bvec3 = vec<3, bool>;
-    using bvec4 = vec<4, bool>;
-}
-
-using Index = uint32_t;
-using Vertex = vec3;
-using Normal = vec3;
-using Color = vec4;
-using UV = vec2;
+#include <system/event/event.hpp>
+#include <window/window.hpp>
+#include <graphics/graphics.hpp>
 
 static const GLfloat g_vertex_buffer_data[] = {
         -1.0f, -1.0f, 0.0f,
@@ -104,39 +44,47 @@ constexpr engine::graphics::ShaderSource fragment_src = R"(
     }
 )"sv;
 
-int main() {
-    GLuint m_vao, m_vbo, m_cbo;
+void android_main() {
+    if (engine::window::init() < 0) {
+        std::__throw_runtime_error("Failed to init window!");
+    }
 
-    auto shader = engine::graphics::newShader(vertex_src, fragment_src);
-    glUseProgram(shader);
+    /*Game Loop*/ {
+        auto shader(engine::graphics::newShader(vertex_src, fragment_src));
+        glUseProgram(shader);
 
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
+        GLuint m_vao, m_vbo, m_cbo;
+        glGenVertexArrays(1, &m_vao);
+        glBindVertexArray(m_vao);
 
-    glGenBuffers(1, &m_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+        glGenBuffers(1, &m_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &m_cbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+        glGenBuffers(1, &m_cbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glVertexAttribPointer(0, 3,  GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
-    glVertexAttribPointer(1, 3,  GL_FLOAT, GL_FALSE, 0, nullptr);
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, m_cbo);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-    engine::event::Message message{};
-    while (engine::window::isOpen()) {
-        engine::event::pump();
-        while (engine::event::poll(message)) {
-            engine::event::handle(message);
-        }
+        bool running = true;
+        engine::system::event::Message message{};
+        while (running) {
+            while (engine::system::event::poll(message)) {
+                switch (message.type) {
+                    case engine::system::event::Event::Quit:
+                        running = false;
+                        break;
+                }
+            }
 
-        if (engine::graphics::isActive()) {
+//            if (engine::graphics::isActive()) {
             glClearColor(1, 1, 1, 1);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -144,10 +92,11 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 3);
             glBindVertexArray(0);
 
-            engine::graphics::present();
+            engine::window::swapBuffers();
+//            }
+            std::this_thread::yield();
         }
-        std::this_thread::yield();
     }
 
-	return 0;
+    engine::window::quit();
 }

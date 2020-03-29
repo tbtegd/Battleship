@@ -1,20 +1,19 @@
 package com.tbte.battleship
 
 import android.app.Activity
+import android.graphics.SurfaceTexture
 import android.os.Bundle
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.view.Surface
+import android.view.TextureView
 import kotlin.system.exitProcess
 
-class MainActivity : Activity(), SurfaceHolder.Callback {
+class MainActivity : Activity(), TextureView.SurfaceTextureListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val surface = SurfaceView(this)
-        surface.holder.addCallback(this)
-        setContentView(surface)
-
-        System.loadLibrary("battleship")
+        val view = TextureView(this)
+        view.surfaceTextureListener = this
+        setContentView(view)
 
         Engine.onCreate()
     }
@@ -46,15 +45,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         exitProcess(0)
     }
 
-    override fun surfaceCreated(holder: SurfaceHolder?) {
-        Engine.surfaceCreated(holder!!.surface)
+    override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
+        Engine.onSurfaceTextureAvailable(Surface(surface))
     }
 
-    override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
-        Engine.surfaceChanged(holder!!.surface, format, width, height);
+    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
+//        Engine.surfaceChanged(surface, width, height)
     }
 
-    override fun surfaceDestroyed(holder: SurfaceHolder?) {
-        Engine.surfaceDestroyed(holder!!.surface)
+    override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {
+    }
+
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
+        Engine.onSurfaceTextureDestroyed()
+        return true;
     }
 }

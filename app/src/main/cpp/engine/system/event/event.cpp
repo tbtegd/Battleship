@@ -1,14 +1,17 @@
-#include "system.hpp"
-#include <array>
+#include "event.hpp"
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <cerrno>
+#include <cassert>
+#include <cstring>
+#include <stdexcept>
+
+namespace {
+    int fd[2]{0, 0};
+}
 
 namespace engine::system::event {
-    namespace {
-        int fd[2] {0, 0};
-    }
-
     int init() {
         if (pipe(fd) < 0) {
             return -1;
@@ -29,7 +32,6 @@ namespace engine::system::event {
         assert(fd[1] != 0);
 
         write(fd[1], &message, sizeof(Message));
-        perror("push");
     }
 
     bool poll(Message &message) {
@@ -49,4 +51,3 @@ namespace engine::system::event {
         return true;
     }
 }
-

@@ -1,26 +1,30 @@
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.4.0)
 
 project(engine)
 
-include_directories(.)
-
 set(CMAKE_CXX_STANDARD 17)
 
+include_directories(.)
+
+#set(ANDROID_ABI "arm64-v8a")
+#set(ANDROID_PLATFORM "android-24")
+#include("/opt/android-sdk/ndk/21.0.6113669/build/cmake/android.toolchain.cmake")
+
 add_library(engine STATIC
+        engine.cpp
+        engine.hpp
         common/module.hpp
         common/object.hpp
-        system/system.cpp
-        system/system.hpp
-        event/event.cpp
-        event/event.hpp
-        graphics/graphics.cpp
-        graphics/graphics.hpp
-        graphics/shader.cpp
-        graphics/shader.hpp
         window/window.cpp
         window/window.hpp
-        window/android/window.cpp
-        window/android/window.hpp
+        graphics/shader.cpp
+        graphics/shader.hpp
+        graphics/graphics.cpp
+        graphics/graphics.hpp
+        system/event/event.cpp
+        system/event/event.hpp
 )
 
-target_link_libraries(engine EGL GLESv2 GLESv3 android log)
+target_link_libraries(engine INTERFACE EGL GLESv3 android)
+#set_target_properties(engine PROPERTIES CXX_VISIBILITY_PRESET hidden)
+#set_target_properties(engine PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
