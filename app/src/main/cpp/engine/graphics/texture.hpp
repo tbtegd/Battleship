@@ -2,9 +2,15 @@
 
 #include <GLES3/gl3.h>
 #include <string_view>
+#include <memory>
+
+namespace engine::image {
+    struct ImageData;
+}
 
 namespace engine::graphics {
     struct Texture {
+    protected:
         Texture(const Texture& other) = delete;
         Texture& operator=(const Texture& other) = delete;
         Texture(Texture&& other) noexcept : m_texture(other.m_texture) {
@@ -15,26 +21,22 @@ namespace engine::graphics {
             shader.m_texture = 0;
             return *this;
         }
-        inline void release() {
-            if (m_texture != 0) {
-                glDeleteTextures(1, &m_texture);
-                m_texture = 0;
-            }
-        }
+        ~Texture();
+
         inline operator GLuint() const noexcept {
             return m_texture;
         }
 
-    protected:
         Texture();
         GLuint m_texture;
     };
 
-    struct Image : Texture {
-        friend Image newImage(std::string_view path);
+    struct Image : private Texture {
+        using Texture::operator GLuint;
+        friend std::shared_ptr<Image> newImage(std::string_view filename);
     private:
-        Image(std::string_view path);
+        Image(const std::shared_ptr<image::ImageData>& data);
     };
 
-    Image newImage(std::string_view path);
+    extern std::shared_ptr<Image> newImage(std::string_view filename);
 }

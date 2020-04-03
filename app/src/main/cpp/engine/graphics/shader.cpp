@@ -3,7 +3,7 @@
 #include <cstdio>
 
 namespace engine::graphics {
-	GLuint ShaderSource::compile(GLenum type) {
+	GLuint ShaderSource::compile(GLenum type) const {
 		GLuint shader = glCreateShader(type);
 		glShaderSource(shader, 1, &__data, &__size);
 		glCompileShader(shader);
@@ -25,12 +25,12 @@ namespace engine::graphics {
 		return shader;
 	}
 
-	Shader::Shader(ShaderSource vertex_source, ShaderSource fragment_source) : m_program(0) {
-		GLuint vertex = vertex_source.compile(GL_VERTEX_SHADER);
+	Shader::Shader(ShaderSource vertex_src, ShaderSource fragment_src) : m_program(0) {
+		GLuint vertex = vertex_src.compile(GL_VERTEX_SHADER);
 		if (vertex == 0) {
 			return;
 		}
-		GLuint fragment = fragment_source.compile(GL_FRAGMENT_SHADER);
+		GLuint fragment = fragment_src.compile(GL_FRAGMENT_SHADER);
 		if (fragment == 0) {
 			return;
 		}
@@ -60,5 +60,12 @@ namespace engine::graphics {
 		}
 
 		m_program = program;
+	}
+
+	Shader::~Shader() {
+		if (m_program != 0) {
+			glDeleteProgram(m_program);
+			m_program = 0;
+		}
 	}
 }

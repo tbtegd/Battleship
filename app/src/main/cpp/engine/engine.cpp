@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <cerrno>
 #include <cstring>
+#include <engine/graphics/graphics.hpp>
 
 extern void android_main();
 
@@ -22,12 +23,24 @@ extern "C" {
         return window;
     }
 
-	JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onCreate(JNIEnv *env, jclass clazz) {}
-    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onStart(JNIEnv *env, jclass clazz) {}
-    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onResume(JNIEnv *env, jclass clazz) {}
-    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onPause(JNIEnv *env, jclass clazz) {}
-    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onStop(JNIEnv *env, jclass clazz) {}
-    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onDestroy(JNIEnv *env, jclass clazz) {}
+	JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onCreate(JNIEnv *env, jclass clazz) {
+        engine::graphics::setActive(true);
+    }
+    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onStart(JNIEnv *env, jclass clazz) {
+        engine::graphics::setActive(true);
+    }
+    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onResume(JNIEnv *env, jclass clazz) {
+        engine::graphics::setActive(true);
+    }
+    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onPause(JNIEnv *env, jclass clazz) {
+        engine::graphics::setActive(false);
+    }
+    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onStop(JNIEnv *env, jclass clazz) {
+        engine::graphics::setActive(false);
+    }
+    JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onDestroy(JNIEnv *env, jclass clazz) {
+        engine::graphics::setActive(false);
+    }
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onSurfaceTextureAvailable(JNIEnv *env, jclass, jobject surface) {
         if (engine::system::event::init() < 0) {
             env->ThrowNew(env->FindClass( "java/lang/RuntimeException"), strerror(errno));

@@ -21,8 +21,14 @@ add_library(engine STATIC
         graphics/shader.hpp
         graphics/graphics.cpp
         graphics/graphics.hpp
+        graphics/texture.cpp
+        graphics/texture.hpp
+        image/imagedata.cpp
+        image/imagedata.hpp
         system/event/event.cpp
         system/event/event.hpp
+        lodepng/lodepng.cpp
+        lodepng/lodepng.hpp
 )
 
 target_link_libraries(engine INTERFACE EGL GLESv3 android)

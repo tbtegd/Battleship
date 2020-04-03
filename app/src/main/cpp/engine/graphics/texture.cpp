@@ -1,18 +1,31 @@
 #include "texture.hpp"
+
+#include "image/imagedata.hpp"
+
 #include <filesystem>
 #include <fstream>
 
-engine::graphics::Texture::Texture() {
-}
+namespace engine::graphics {
+    Texture::Texture() {
+        glGenTextures(1, &m_texture);
+    }
 
-engine::graphics::Image::Image(std::string_view path) : Texture() {
-    glGenTextures(1, &m_texture);
-    glBindTexture(GL_TEXTURE_2D, m_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
+    Texture::~Texture() {
+        if (m_texture != 0) {
+            glDeleteTextures(1, &m_texture);
+            m_texture = 0;
+        }
+    }
 
-engine::graphics::Image engine::graphics::newImage(std::string_view path) {
-    return Image(path);
+    Image::Image(const std::shared_ptr<image::ImageData>& data) : Texture() {
+        glBindTexture(GL_TEXTURE_2D, m_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, data->getWidth(), data->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data->pixels());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    std::shared_ptr<Image> newImage(std::string_view filename) {
+        return std::shared_ptr<Image>::make_shared(Image(engine::image::newImageData(filename)));
+    }
 }
