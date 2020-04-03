@@ -14,8 +14,7 @@ class MainActivity : Activity(), TextureView.SurfaceTextureListener {
         val view = TextureView(this)
         view.surfaceTextureListener = this
         setContentView(view)
-
-        Engine.onCreate()
+        Engine.onCreate(assets)
     }
 
     override fun onStart() {

@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-inline namespace math {
+namespace math {
     template <size_t N, typename T> //requires (std::is_integral_v<T> || std::is_floating_point_v<T>)
     struct vec;
 

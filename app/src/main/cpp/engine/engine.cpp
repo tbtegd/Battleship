@@ -6,12 +6,18 @@
 #include <cerrno>
 #include <cstring>
 #include <engine/graphics/graphics.hpp>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
 
 extern void android_main();
 
-inline pthread_t m_thread;
-inline NativeWindowType window;
-inline jclass Class;
+namespace {
+    AAssetManager* m_assets;
+    NativeWindowType window;
+    jclass m_activity_class;
+    pthread_t m_thread;
+    JavaVM* m_vm;
+}
 
 inline void* start_routine(void*) {
 	android_main();
@@ -23,7 +29,12 @@ extern "C" {
         return window;
     }
 
-	JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onCreate(JNIEnv *env, jclass clazz) {
+    AAssetManager* AAssetManager_getInstance() {
+        return m_assets;
+    }
+
+	JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onCreate(JNIEnv *env, jclass clazz, jobject assets) {
+        m_assets = AAssetManager_fromJava(env, assets);
         engine::graphics::setActive(true);
     }
     JNIEXPORT void JNICALL Java_com_tbte_battleship_Engine_onStart(JNIEnv *env, jclass clazz) {
@@ -64,6 +75,11 @@ extern "C" {
     }
 
     JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*) {
+        m_vm = vm;
+
+        union { void* __ptr_env = nullptr; JNIEnv* env; };
+        vm->GetEnv(&__ptr_env, JNI_VERSION_1_6);
+        m_activity_class = env->FindClass("com/tbte/battleship/MainActivity");
         return JNI_VERSION_1_6;
     }
     JNIEXPORT void JNI_OnUnload(JavaVM* vm, void*) {

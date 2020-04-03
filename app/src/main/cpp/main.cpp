@@ -4,31 +4,21 @@
 #include <system/event/event.hpp>
 #include <window/window.hpp>
 #include <graphics/graphics.hpp>
-
-static const GLfloat g_vertex_buffer_data[] = {
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        0.0f,  1.0f, 0.0f,
-};
-
-static const GLfloat g_color_buffer_data[] = {
-        0.583f,  0.771f,  0.014f,
-        0.609f,  0.115f,  0.436f,
-        0.327f,  0.483f,  0.844f
-};
+#include <engine/graphics/texture.hpp>
 
 using std::string_view_literals::operator""sv;
 
 constexpr engine::graphics::ShaderSource vertex_src = R"(
     #version 300 es
 
-    layout(location = 0) in vec2 _FragCoord;
+    layout(location = 0) in vec3 _Position;
+    layout(location = 1) in vec2 _FragCoord;
 
     out vec2 fragCoord;
 
     void main() {
         fragCoord = _FragCoord;
-        gl_Position = vec4(_FragCoord, 0.0, 1.0);
+        gl_Position = vec4(_Position, 1.0);
     }
 )"sv;
 
@@ -38,8 +28,10 @@ constexpr engine::graphics::ShaderSource fragment_src = R"(
     in vec2 fragCoord;
     out vec4 fragColor;
 
+    uniform sampler2D img;
+
     void main(){
-        fragColor = vec4(0, 0, 0, 1.0);
+        fragColor = texture(img, fragCoord);
     }
 )"sv;
 
@@ -52,7 +44,33 @@ void android_main() {
         auto shader(engine::graphics::newShader(vertex_src, fragment_src));
         glUseProgram(shader->operator GLuint());
 
-        GLuint m_vao, m_vbo;
+        auto field(engine::graphics::newImage("field.png"));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, field->operator GLuint());
+
+        auto s = float(field->getWidth()) / float(field->getHeight()) * 0.5f;
+
+        const GLfloat g_vertex_buffer_data[] = {
+                -1.0f, -s, 0.0f,
+                1.0f, -s, 0.0f,
+                -1.0f, s, 0.0f,
+
+                -1.0f, s, 0.0f,
+                1.0f, -s, 0.0f,
+                1.0f, s, 0.0f,
+        };
+
+        const GLfloat g_uv_buffer_data[] = {
+                0, 1,
+                1, 1,
+                0, 0,
+
+                0, 0,
+                1, 1,
+                1, 0
+        };
+
+        GLuint m_vao, m_vbo, m_ubo;
         glGenVertexArrays(1, &m_vao);
         glBindVertexArray(m_vao);
 
@@ -63,6 +81,16 @@ void android_main() {
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glGenBuffers(1, &m_ubo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_ubo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, m_ubo);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+        glClearColor(1, 1, 1, 1);
 
         bool running = true;
         engine::system::event::Message message{};
@@ -76,11 +104,10 @@ void android_main() {
             }
 
             if (engine::graphics::isActive()) {
-                glClearColor(1, 1, 1, 1);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
                 glBindVertexArray(m_vao);
-                glDrawArrays(GL_TRIANGLES, 0, 3);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
                 glBindVertexArray(0);
 
                 engine::window::swapBuffers();

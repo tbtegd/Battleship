@@ -1,6 +1,8 @@
 #include "shader.hpp"
 
-#include <cstdio>
+//#include <cstdio>
+
+#include <iostream>
 
 namespace engine::graphics {
 	GLuint ShaderSource::compile(GLenum type) const {
@@ -16,7 +18,8 @@ namespace engine::graphics {
 			if (length > 0) {
 				char* message = new char[length];
 				glGetShaderInfoLog(shader, length, nullptr, message);
-				fwrite(message, length, 1, stderr);
+				std::cerr.write(message, length);
+//				fwrite(message, length, 1, stderr);
 				delete[] message;
 			}
 			glDeleteShader(shader);

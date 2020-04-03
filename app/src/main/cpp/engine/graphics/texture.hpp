@@ -33,8 +33,24 @@ namespace engine::graphics {
 
     struct Image : private Texture {
         using Texture::operator GLuint;
+
         friend std::shared_ptr<Image> newImage(std::string_view filename);
+
+        inline auto getDimensions() const noexcept {
+            return std::pair(m_width, m_height);
+        }
+
+        inline auto getWidth() const noexcept {
+            return m_width;
+        }
+
+        inline auto getHeight() const noexcept {
+            return m_height;
+        }
+
     private:
+        int m_width, m_height;
+
         Image(const std::shared_ptr<image::ImageData>& data);
     };
 

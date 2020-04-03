@@ -1,5 +1,6 @@
 package com.tbte.battleship
 
+import android.content.res.AssetManager
 import android.view.Surface
 
 object Engine {
@@ -7,7 +8,7 @@ object Engine {
         System.loadLibrary("battleship")
     }
 
-    @JvmStatic external fun onCreate()
+    @JvmStatic external fun onCreate(assets: AssetManager)
     @JvmStatic external fun onStart()
     @JvmStatic external fun onResume()
     @JvmStatic external fun onPause()

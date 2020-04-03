@@ -7,7 +7,7 @@ namespace {
 
 namespace engine::graphics {
     std::shared_ptr<Shader> newShader(ShaderSource vertex_src, ShaderSource fragment_src) {
-        return std::make_shared<Shader>(std::move(Shader(vertex_src, fragment_src)));
+        return std::make_shared<Shader>(Shader(vertex_src, fragment_src));
     }
 
     void setActive(bool enable) noexcept {
